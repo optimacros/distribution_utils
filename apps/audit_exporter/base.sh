@@ -196,8 +196,9 @@ while [ "$d" != "$endDate" ]; do
 #    echo "cd \"$vagrantPath\" && vagrant ssh -- -t -q mongoexport -d=\"$mDB\" -c=\"$mCollection\" -u=\"$mUser\" -p=\"$mPassword\" -q=\'{\"createAt\": { \"\$gte\" : \"$dateTsStart\", \"\$lt\" : \"$dateTsEnd\" } }\' --sort=\'{id: -1}\' --authenticationDatabase=admin"
     $(cd "$vagrantPath" && vagrant ssh -- -t -q mongoexport -d="$mDB" -c="$mCollection" -u="$mUser" -p="$mPassword" -q=\'{\"createAt\": { \"\$gte\" : "$dateTsStart", \"\$lt\" : "$dateTsEnd" } }\' --sort=\'{id: -1}\' --authenticationDatabase=admin >> "$tmp")
   elif [[ "$appType" == "lc" ]]; then
-#    echo "docker exec -ti optimacros_db mongoexport -d=\"$mDB\" -c=\"$mCollection\" -u=\"$mUser\" -p=\"$mPassword\" -q='{\"createAt\": { \"\$gte\" : \"$dateTsStart\", \"\$lt\" : \"$dateTsEnd\" } }' --sort='{id: -1}' --authenticationDatabase=admin"
-    $(docker exec -ti optimacros_db mongoexport -d="$mDB" -c="$mCollection" -u="$mUser" -p="$mPassword" -q='{"createAt": { "\$gte" : "$dateTsStart", "\$lt" : "$dateTsEnd" } }' --sort='{id: -1}' --authenticationDatabase=admin >> "$tmp")
+    command="docker exec -ti optimacros_db mongoexport -d=\"$mDB\" -c=\"$mCollection\" -u=\"$mUser\" -p=\"$mPassword\" -q='{\"date\": { \"\$gte\": { \"\$date\": \""$dateF"T00:00:00.000Z\" }, \"\$lt\": {\"\$date\": \""$dateF"T23:59:59.000Z\" } } }' --sort='{id: -1}' --authenticationDatabase=admin  >> $tmp"
+#    echo "$command"
+    eval "$command"
   else
     echo "wrong application type provided"
     exit 1
