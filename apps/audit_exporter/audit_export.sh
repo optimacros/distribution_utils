@@ -32,14 +32,16 @@ done
 
 export $(grep -v '^#' "$envPath" | xargs)
 
+DATE_NOW=$(date +'%F')
+
 if [ -z "$START_DATE" ]
 then
-    START_DATE=$(date +'%F')
+    START_DATE="$DATE_NOW"
 fi
 
 if [ -z "$END_DATE" ]
 then
-    END_DATE=$(date -I -d "$START_DATE + 1 day")
+    END_DATE="$DATE_NOW"
 fi
 
-./base.sh -t "$APPLICATION_TYPE" -c "$CONFIG_PATH" -p "$PROJECT_PATH" -s "$START_DATE" -e "$END_DATE" -o "$TARGET_DIR"
+./base.sh -t "$APPLICATION_TYPE" -p "$CONFIG_PATH" -v "$PROJECT_PATH" -s "$START_DATE" -e "$END_DATE" -o "$TARGET_DIR"
