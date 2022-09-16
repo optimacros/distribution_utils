@@ -119,7 +119,7 @@ if [[ "$appType" == "mw" ]]; then
 
     mPassword=$(cat "$configPath" | grep "mongodb" -C3 | grep "$mUser" | awk -v RS='\r\n' "/$mUser/ { gsub(/[\",]/,\"\",\$2); print \$2}")
 
-    if [ -z "$vagrantPath" ]
+    if [ -z "$mPassword" ]
     then
       echo "Can not parse password for user: $mUser"
       exit 1
