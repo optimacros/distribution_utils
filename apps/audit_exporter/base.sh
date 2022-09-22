@@ -119,7 +119,7 @@ if [[ "$appType" == "mw" ]]; then
 
     mPassword=$(cat "$configPath" | grep "mongodb" -C3 | grep "$mUser" | awk -v RS='\r\n' "/$mUser/ { gsub(/[\",]/,\"\",\$2); print \$2}")
 
-    if [ -z "$vagrantPath" ]
+    if [ -z "$mPassword" ]
     then
       echo "Can not parse password for user: $mUser"
       exit 1
@@ -135,7 +135,7 @@ if [[ "$appType" == "mw" ]]; then
       mCollection='events'
     fi
 
-    version=$(cd "$vagrantPath" && vagrant ssh -- -t -q cat /home/vagrant/optimacros_middlework/app/config/version.php | grep return | cut -d"'" -f 2)
+    version=$(cd "$vagrantPath" && vagrant ssh -- -t -q cat optimacros_middlework/app/config/version.php | grep return | cut -d"'" -f 2)
 
   elif [[ "$appType" == "lc" ]]; then
     if [ -z "$mUser" ]
@@ -173,11 +173,13 @@ endDate=$(date -I -d "$endDate + 1 day")
 while [ "$d" != "$endDate" ]; do
   echo "Start export for date: $d"
 
+  dateNextDay=$(date -I -d "$d + 1 day")
   dateF=$(date -d "$d" +'%F')
+  dateFNextDay=$(date -d "$dateNextDay" +'%F')
   dateNowDate=$(date +"%F")
   dateNowTime=$(date +"%T")
   dateTsStart=$(date -d "$d 00:00:00" +'%s')
-  dateTsEnd=$(date -d "$d 23:59:59" +'%s')
+  dateTsEnd=$(date -d "$dateNextDay 00:00:00" +'%s')
   auditFileName="$dateF"'_om_'"$appType"'_audit_log.txt'
 
   FILE="$outputDir/$auditFileName"
@@ -195,7 +197,7 @@ while [ "$d" != "$endDate" ]; do
   if [[ "$appType" == "mw" ]]; then
     $(cd "$vagrantPath" && vagrant ssh -- -t -q mongoexport -d="$mDB" -c="$mCollection" -u="$mUser" -p="$mPassword" -q=\'{\"createAt\": { \"\$gte\" : "$dateTsStart", \"\$lt\" : "$dateTsEnd" } }\' --sort=\'{id: -1}\' --authenticationDatabase=admin >> "$tmp")
   elif [[ "$appType" == "lc" ]]; then
-    command="docker exec -ti optimacros_db mongoexport -d=\"$mDB\" -c=\"$mCollection\" -u=\"$mUser\" -p=\"$mPassword\" -q='{\"date\": { \"\$gte\": { \"\$date\": \""$dateF"T00:00:00.000Z\" }, \"\$lt\": {\"\$date\": \""$dateF"T23:59:59.000Z\" } } }' --sort='{id: -1}' --authenticationDatabase=admin  >> $tmp"
+    command="docker exec -ti optimacros_db mongoexport -d=\"$mDB\" -c=\"$mCollection\" -u=\"$mUser\" -p=\"$mPassword\" -q='{\"date\": { \"\$gte\": { \"\$date\": \""$dateF"T00:00:00.000Z\" }, \"\$lt\": {\"\$date\": \""$dateFNextDay"T00:00:00.000Z\" } } }' --sort='{id: -1}' --authenticationDatabase=admin  >> $tmp"
     eval "$command"
   else
     echo "wrong application type provided"
@@ -206,7 +208,7 @@ while [ "$d" != "$endDate" ]; do
   $(rm "$tmp")
 
   echo "$FILE saved"
-  d=$(date -I -d "$d + 1 day")
+  d="$dateNextDay"
 done
 
 exit 0
